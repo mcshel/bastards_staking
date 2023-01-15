@@ -1,4 +1,0 @@
-cargo:rerun-if-changed=build.rs
-cargo:rustc-cfg=no_target_has_atomic
-cargo:rustc-cfg=no_std_atomic64
-cargo:rustc-cfg=no_std_atomic

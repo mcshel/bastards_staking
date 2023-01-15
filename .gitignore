@@ -102,3 +102,12 @@ dist
 
 # TernJS port file
 .tern-port
+
+# Custom ignores
+.anchor
+.DS_Store
+target
+node_modules
+dist
+build
+test-ledger
