@@ -9,6 +9,7 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "localnet"
+#cluster = 'https://little-delicate-wave.solana-devnet.quiknode.pro/ed2a2c88df5e4ccf01cfe930774286cbe1f3f780/'
 wallet = "/home/mcshell/.config/solana/id.json"
 
 [scripts]

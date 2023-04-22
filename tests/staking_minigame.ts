@@ -166,7 +166,7 @@ describe("staking_minigame", () => {
             const faction = Math.round(1 + Math.random());
             console.log(`\t\tAssigning creator ${creatorKeypair.publicKey} to faction ${faction}`);
             
-            const ix = program.instruction.addWhitelist(creatorKeypair.publicKey, new anchor.BN(1), faction, {
+            const ix = program.instruction.addWhitelist(creatorKeypair.publicKey, 0, faction, {
                 accounts: {
                     adminSettings: adminSettingsAccount,
                     whitelist: whitelistAccount,
@@ -180,7 +180,7 @@ describe("staking_minigame", () => {
         for (let nft of mintWhitelist) {
             const [whitelistAccount, bump] = await anchor.web3.PublicKey.findProgramAddress([Buffer.from("whitelist"), nft.mintAddress.toBuffer()], program.programId);
             
-            const ix = program.instruction.addWhitelist(nft.mintAddress, new anchor.BN(0), nft.faction, {
+            const ix = program.instruction.addWhitelist(nft.mintAddress, 0, nft.faction, {
                 accounts: {
                     adminSettings: adminSettingsAccount,
                     whitelist: whitelistAccount,
@@ -334,7 +334,7 @@ describe("staking_minigame", () => {
             },
         });
         
-        const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [adminKeypair], {skipPreflight: true});
+        const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [keypair], {skipPreflight: true});
         console.log(`\tUpdate mine transaction: ${signature}`);
         
         const mineAccountData2 = await program.account.mine.fetch(mineAccount);
@@ -418,7 +418,7 @@ describe("staking_minigame", () => {
             },
         });
         
-        const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [adminKeypair], {skipPreflight: true});
+        const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [keypair], {skipPreflight: true});
         console.log(`\tUpdate loot transaction: ${signature}`);
         
         const lootAccountData = await program.account.loot.fetch(lootAccount);
@@ -611,9 +611,10 @@ describe("staking_minigame", () => {
         
         const [characterAccount, bump] = await anchor.web3.PublicKey.findProgramAddress([Buffer.from("character"), nft1.mintAddress.toBuffer()], program.programId);
         const [nftEditionAccount, bump2] = await anchor.web3.PublicKey.findProgramAddress([Buffer.from("metadata"), tokenMetadataProgram.toBuffer(), nft1.mintAddress.toBuffer(), Buffer.from("edition")], tokenMetadataProgram);
+        
         const whitelistAccount = await getWhitelistAccount(creatorKeypair, program.programId, creatorWhitelist, nft1);
         const nftTokenAccount = await spl.getAssociatedTokenAddress(nft1.mintAddress, userKeypair1.publicKey);
-        const rewardAta = await spl.getOrCreateAssociatedTokenAccount(provider.connection, userKeypair1, rewardMintAccount, userKeypair1.publicKey);
+        const rewardAta = await spl.getOrCreateAssociatedTokenAccount(provider.connection, adminKeypair, rewardMintAccount, userKeypair1.publicKey);
         
         const tx = program.transaction.forceUnstakeMine({
             accounts: {
@@ -633,7 +634,6 @@ describe("staking_minigame", () => {
                 associatedTokenProgram: spl.ASSOCIATED_TOKEN_PROGRAM_ID,
                 recentSlothashes: anchor.web3.SYSVAR_SLOT_HASHES_PUBKEY,
             },
-            
         });
         
         const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [adminKeypair], {skipPreflight: true});
@@ -751,7 +751,7 @@ describe("staking_minigame", () => {
         const [nftEditionAccount, bump2] = await anchor.web3.PublicKey.findProgramAddress([Buffer.from("metadata"), tokenMetadataProgram.toBuffer(), nft2.mintAddress.toBuffer(), Buffer.from("edition")], tokenMetadataProgram);
         const whitelistAccount = await getWhitelistAccount(creatorKeypair, program.programId, creatorWhitelist, nft2);
         const nftTokenAccount = await spl.getAssociatedTokenAddress(nft2.mintAddress, userKeypair2.publicKey);
-        const rewardAta = await spl.getOrCreateAssociatedTokenAccount(provider.connection, userKeypair2, rewardMintAccount, userKeypair2.publicKey);
+        const rewardAta = await spl.getOrCreateAssociatedTokenAccount(provider.connection, adminKeypair, rewardMintAccount, userKeypair2.publicKey);
         
         const tx = program.transaction.forceUnstakeLoot({
             accounts: {
@@ -863,18 +863,16 @@ describe("staking_minigame", () => {
     
     it("Staking pools closed!", async () => {
         const tx = program.transaction.closePools({
-                accounts: {
-                    adminSettings: adminSettingsAccount,
-                    mine: mineAccount,
-                    loot: lootAccount,
-                    //lootProceeds: lootProceedsAccount,
-                    mint: rewardMintAccount,
-                    authority: adminKeypair.publicKey,
-                    tokenProgram: spl.TOKEN_PROGRAM_ID,
-                    systemProgram: anchor.web3.SystemProgram.programId,
-                    rent: anchor.web3.SYSVAR_RENT_PUBKEY
-                },
-            });
+            accounts: {
+                adminSettings: adminSettingsAccount,
+                mine: mineAccount,
+                loot: lootAccount,
+                mint: rewardMintAccount,
+                authority: adminKeypair.publicKey,
+                tokenProgram: spl.TOKEN_PROGRAM_ID,
+                systemProgram: anchor.web3.SystemProgram.programId
+            },
+        });
     
         const signature = await anchor.web3.sendAndConfirmTransaction(provider.connection, tx, [adminKeypair], {skipPreflight: true});
         console.log(`\tClose staking pool transaction: ${signature}`);
